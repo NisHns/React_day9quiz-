@@ -10,12 +10,22 @@ const QuizApp = () => {
     const timerRef = useRef(null);
 
     useEffect(() => {
-        fetchQuestions();
+        const storedQuestions = localStorage.getItem('questions');
+        if (storedQuestions) {
+            setQuestions(JSON.parse(storedQuestions));
+            setLoading(false);
+        } else {
+            fetchQuestions();
+        }
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('questions', JSON.stringify(questions));
+    }, [questions]);
 
     const fetchQuestions = async () => {
         try {
-            const response = await fetch('https://opentdb.com/api.php?amount=10');
+            const response = await fetch('https://opentdb.com/api.php?amount=15');
             const data = await response.json();
             setQuestions(data.results);
             setLoading(false);
@@ -54,12 +64,8 @@ const QuizApp = () => {
         if (currentQuestionIndex < (questions?.length || 0) - 1) {
             setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
         } else {
+            // End of quiz
             alert(`Quiz ended! Your final score is: ${score}/${questions.length}`);
-            setQuestions([]);
-            setCurrentQuestionIndex(0);
-            setScore(0);
-            setLoading(true);
-            fetchQuestions();
         }
     };
 
@@ -81,7 +87,12 @@ const QuizApp = () => {
     }
 
     if (!currentQuestion) {
-        return <div>No questions available.</div>;
+        return (
+            <div>
+                <p>No questions available.</p>
+                <button onClick={fetchQuestions}>Fetch Questions</button>
+            </div>
+        );
     }
 
     return (
