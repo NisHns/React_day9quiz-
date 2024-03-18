@@ -10,11 +10,11 @@ const QuizApp = () => {
 
     useEffect(() => {
         fetchQuestions();
-    }, []);
+    });
 
     const fetchQuestions = async () => {
         try {
-            const response = await fetch('https://opentdb.com/api.php?amount=5');
+            const response = await fetch('https://opentdb.com/api.php?amount=10');
             const data = await response.json();
             setQuestions(data.results);
         } catch (error) {
@@ -23,7 +23,16 @@ const QuizApp = () => {
     };
 
     useEffect(() => {
-        if (timerRunning && timeLeft === 0) {
+        if (timerRunning) {
+            timerRef.current = setInterval(() => {
+                setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
+            }, 1000);
+            return () => clearInterval(timerRef.current);
+        }
+    });
+
+    useEffect(() => {
+        if (timeLeft === 0) {
             handleNextQuestion();
         }
     });
@@ -45,6 +54,10 @@ const QuizApp = () => {
             // End of quiz
             alert(`Quiz ended! Your final score is: ${score}/${questions.length}`);
         }
+    };
+
+    const handleSkipQuestion = () => {
+        handleNextQuestion();
     };
 
     const getCurrentQuestion = () => {
@@ -73,6 +86,9 @@ const QuizApp = () => {
                 ))}
             </ul>
             <p>Time left: {timeLeft} seconds</p>
+            <button onClick={handleSkipQuestion} disabled={timerRunning}>
+                Skip Question
+            </button>
         </div>
     );
 };
