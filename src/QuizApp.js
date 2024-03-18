@@ -6,19 +6,22 @@ const QuizApp = () => {
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(5);
     const [timerRunning, setTimerRunning] = useState(false);
+    const [loading, setLoading] = useState(true);
     const timerRef = useRef(null);
 
     useEffect(() => {
         fetchQuestions();
-    });
+    }, []);
 
     const fetchQuestions = async () => {
         try {
             const response = await fetch('https://opentdb.com/api.php?amount=10');
             const data = await response.json();
             setQuestions(data.results);
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching questions:', error);
+            setLoading(false);
         }
     };
 
@@ -29,13 +32,13 @@ const QuizApp = () => {
             }, 1000);
             return () => clearInterval(timerRef.current);
         }
-    });
+    }, [timerRunning]);
 
     useEffect(() => {
         if (timeLeft === 0) {
             handleNextQuestion();
         }
-    });
+    }, [timeLeft]);
 
     const handleAnswer = (selectedAnswer) => {
         if (selectedAnswer === getCurrentQuestion()?.correct_answer) {
@@ -51,8 +54,12 @@ const QuizApp = () => {
         if (currentQuestionIndex < (questions?.length || 0) - 1) {
             setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
         } else {
-            // End of quiz
             alert(`Quiz ended! Your final score is: ${score}/${questions.length}`);
+            setQuestions([]);
+            setCurrentQuestionIndex(0);
+            setScore(0);
+            setLoading(true);
+            fetchQuestions();
         }
     };
 
@@ -69,8 +76,12 @@ const QuizApp = () => {
 
     const currentQuestion = getCurrentQuestion();
 
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
     if (!currentQuestion) {
-        return <div>Loading...</div>; // or any other loading indicator
+        return <div>No questions available.</div>;
     }
 
     return (
